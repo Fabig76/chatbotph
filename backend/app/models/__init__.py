@@ -4,6 +4,7 @@ from app.models.resident import Resident
 from app.models.account_balance import AccountBalance
 from app.models.sheet_sync_run import SheetSyncRun
 from app.models.audit_log import AuditLog
+from app.models.admin_chat import AdminChat
 
 __all__ = [
     "Unit",
@@ -11,4 +12,5 @@ __all__ = [
     "AccountBalance",
     "SheetSyncRun",
     "AuditLog",
+    "AdminChat",
 ]

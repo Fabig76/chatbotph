@@ -85,9 +85,21 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
 
+    # admin_chats
+    op.create_table(
+        "admin_chats",
+        sa.Column("chat_id", sa.BigInteger(), primary_key=True, autoincrement=False),
+        sa.Column("display_name", sa.String(100)),
+        sa.Column("role", sa.String(20)),
+        sa.Column("active", sa.Boolean(), server_default=sa.text("true")),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+    )
+
 
 def downgrade() -> None:
     """Drop initial tables."""
+    op.drop_table("admin_chats")
     op.drop_table("audit_log")
     op.drop_table("sheet_sync_runs")
     op.drop_table("account_balances")
