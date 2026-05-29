@@ -1,0 +1,111 @@
+name: hermes-agent
+
+services:
+  # ── Reverse Proxy (TLS automático) ──
+  caddy:
+    image: caddy:2-alpine
+    container_name: hermes-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - hermes-net
+
+  # ── API Backend (FastAPI) ──
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hermes-api
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "8000"
+    volumes:
+      - ./backend:/app
+      - ./corpus:/corpus:ro
+      - media_data:/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - hermes-net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Worker (tareas asíncronas) ──
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hermes-worker
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./backend:/app
+      - ./corpus:/corpus:ro
+      - media_data:/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - hermes-net
+    command: python -m app.worker
+
+  # ── PostgreSQL + pgvector ──
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: hermes-db
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hermes} -d ${POSTGRES_DB:-hermes}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hermes-net
+
+  # ── Redis (cache + colas) ──
+  redis:
+    image: redis:7-alpine
+    container_name: hermes-redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --save 300 10
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - hermes-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+  media_data:
+
+networks:
+  hermes-net:
+    driver: bridge
