@@ -8,21 +8,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/telegram", tags=["telegram"])
 
-# Build once on import
+# Build and initialize once on import
 _bot_app = None
 
 
-def get_bot_app():
+async def get_bot_app():
     global _bot_app
     if _bot_app is None:
         _bot_app = build_application()
+        await _bot_app.initialize()
+        await _bot_app.start()
     return _bot_app
 
 
 @router.post("/webhook")
 async def telegram_webhook(request: Request):
     """Receive Telegram updates via webhook."""
-    app = get_bot_app()
+    app = await get_bot_app()
     try:
         body = await request.json()
         update = Update.de_json(body, app.bot)
@@ -36,7 +38,7 @@ async def telegram_webhook(request: Request):
 @router.get("/webhook/info")
 async def webhook_info():
     """Get current webhook status."""
-    app = get_bot_app()
+    app = await get_bot_app()
     wh = await app.bot.get_webhook_info()
     return {
         "url": wh.url,
