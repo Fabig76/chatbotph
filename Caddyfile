@@ -1,14 +1,11 @@
 # Caddyfile — Hermes Agent
-adminbot.info, www.adminbot.info {
-    # Redirigir www al dominio principal
-    redir www.adminbot.info https://adminbot.info{uri} permanent
-
+adminbot.info {
     # API backend
     handle_path /api/* {
         reverse_proxy api:8000
     }
 
-    # Telegram webhook (ruta específica)
+    # Telegram webhook
     handle_path /telegram/* {
         reverse_proxy api:8000
     }
@@ -18,7 +15,7 @@ adminbot.info, www.adminbot.info {
         reverse_proxy api:8000
     }
 
-    # Frontend PWA (archivos estáticos)
+    # Frontend PWA
     handle {
         root * /usr/share/caddy/www
         file_server
@@ -33,9 +30,4 @@ adminbot.info, www.adminbot.info {
         X-XSS-Protection "1; mode=block"
         Referrer-Policy "strict-origin-when-cross-origin"
     }
-}
-
-# Entorno de desarrollo local
-localhost:8000 {
-    reverse_proxy api:8000
 }

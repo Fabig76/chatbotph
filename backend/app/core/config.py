@@ -6,8 +6,8 @@ from typing import List
 class Settings(BaseSettings):
     # App
     debug: bool = False
-    secret_key: str = "change-me-in-production"
-    cors_origins: List[str] = ["https://adminbot.info"]
+    # CORS
+    cors_origins: list[str] = ["https://adminbot.info"]
 
     # Database
     database_url: str = "postgresql+asyncpg://hermes:hermes@db:5432/hermes"
