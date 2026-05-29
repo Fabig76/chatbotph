@@ -1,13 +1,19 @@
 """Hermes Agent — Pydantic Settings."""
+import json
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List
 
 
 class Settings(BaseSettings):
     # App
     debug: bool = False
-    # CORS
-    cors_origins: list[str] = ["https://adminbot.info"]
+    # CORS (comma-separated env var)
+    cors_origins_raw: str = "https://adminbot.info"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [s.strip() for s in self.cors_origins_raw.split(",") if s.strip()]
 
     # Database
     database_url: str = "postgresql+asyncpg://hermes:hermes@db:5432/hermes"
