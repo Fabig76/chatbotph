@@ -30,6 +30,7 @@ services:
       - "8000"
     volumes:
       - ./backend:/app
+      - ./credentials:/app/credentials:ro
       - ./corpus:/corpus:ro
       - media_data:/media
     depends_on:
@@ -51,6 +52,7 @@ services:
     env_file: .env
     volumes:
       - ./backend:/app
+      - ./credentials:/app/credentials:ro
       - ./corpus:/corpus:ro
       - media_data:/media
     depends_on:
